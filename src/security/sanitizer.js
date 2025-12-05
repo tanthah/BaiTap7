@@ -1,28 +1,48 @@
-import DOMPurify from 'dompurify';
-
 /**
  * Security Layer - Input Sanitization & Validation
+ * Note: DOMPurify is optional - falls back to basic sanitization
  */
+
+let DOMPurify;
+try {
+  DOMPurify = require('dompurify');
+} catch (e) {
+  console.warn('DOMPurify not found, using basic sanitization');
+}
 
 // Sanitize functions
 export const sanitize = {
   // Sanitize text input - remove all HTML/script tags
   text: (input) => {
     if (typeof input !== 'string') return '';
-    return DOMPurify.sanitize(input, { 
-      ALLOWED_TAGS: [], 
-      ALLOWED_ATTR: [],
-      KEEP_CONTENT: true
-    }).trim();
+    
+    if (DOMPurify) {
+      return DOMPurify.sanitize(input, { 
+        ALLOWED_TAGS: [], 
+        ALLOWED_ATTR: [],
+        KEEP_CONTENT: true
+      }).trim();
+    }
+    
+    // Fallback basic sanitization
+    return input
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<[^>]*>/g, '')
+      .trim();
   },
   
   // Sanitize HTML content (if needed for rich text)
   html: (input) => {
     if (typeof input !== 'string') return '';
-    return DOMPurify.sanitize(input, {
-      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br'],
-      ALLOWED_ATTR: []
-    });
+    
+    if (DOMPurify) {
+      return DOMPurify.sanitize(input, {
+        ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br'],
+        ALLOWED_ATTR: []
+      });
+    }
+    
+    return sanitize.text(input);
   },
   
   // Validate and sanitize number
@@ -60,7 +80,7 @@ export const sanitize = {
     
     const sanitized = {};
     for (const [key, value] of Object.entries(input)) {
-      const cleanKey = sanitize.text(key);
+      const cleanKey = sanitize.text(String(key));
       const cleanValue = typeof value === 'string' ? sanitize.text(value) : value;
       if (cleanKey) {
         sanitized[cleanKey] = cleanValue;
@@ -77,7 +97,7 @@ export const validators = {
   },
   
   productName: (name) => {
-    const cleaned = sanitize.text(name);
+    const cleaned = sanitize.text(String(name));
     if (cleaned.length < 1) {
       throw new Error('Product name is required');
     }
@@ -118,7 +138,7 @@ export const validators = {
         id: validators.productId(item.id),
         name: validators.productName(item.name),
         price: validators.price(item.price),
-        quantity: validators.quantity(item.quantity),
+        quantity: validators.quantity(item.quantity || 1),
         image: validators.image(item.image),
         variant: validators.variant(item.variant)
       };
@@ -134,35 +154,35 @@ export class RateLimiter {
   constructor(maxRequests = 20, timeWindowMs = 60000) {
     this.maxRequests = maxRequests;
     this.timeWindowMs = timeWindowMs;
-    this.requests = [];
+    this.requests = {};
   }
   
   canMakeRequest(action = 'default') {
     const now = Date.now();
     const key = `${action}_requests`;
     
-    if (!this[key]) {
-      this[key] = [];
+    if (!this.requests[key]) {
+      this.requests[key] = [];
     }
     
     // Remove old requests outside time window
-    this[key] = this[key].filter(time => now - time < this.timeWindowMs);
+    this.requests[key] = this.requests[key].filter(time => now - time < this.timeWindowMs);
     
     // Check if limit exceeded
-    if (this[key].length >= this.maxRequests) {
-      const oldestRequest = this[key][0];
+    if (this.requests[key].length >= this.maxRequests) {
+      const oldestRequest = this.requests[key][0];
       const waitTime = Math.ceil((this.timeWindowMs - (now - oldestRequest)) / 1000);
       throw new Error(`Too many requests. Please wait ${waitTime} seconds.`);
     }
     
     // Add current request
-    this[key].push(now);
+    this.requests[key].push(now);
     return true;
   }
   
   reset(action = 'default') {
     const key = `${action}_requests`;
-    this[key] = [];
+    this.requests[key] = [];
   }
 }
 
