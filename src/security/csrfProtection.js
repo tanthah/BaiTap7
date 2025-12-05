@@ -3,6 +3,8 @@
  * Sử dụng cho các form và API requests
  */
 
+import React from 'react';
+
 export class CSRFProtection {
   static TOKEN_KEY = 'csrf_token';
   static TOKEN_HEADER = 'X-CSRF-Token';
@@ -78,8 +80,6 @@ export class CSRFProtection {
 /**
  * React Hook for CSRF protection
  */
-import React from 'react';
-
 export const useCSRF = () => {
   const [token, setToken] = React.useState(() => CSRFProtection.getToken());
   
@@ -109,8 +109,6 @@ export const useCSRF = () => {
 /**
  * CSRF Token Component (for forms)
  */
-import React from 'react';
-
 export const CSRFTokenField = () => {
   const token = CSRFProtection.getToken();
   
