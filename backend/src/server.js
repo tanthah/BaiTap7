@@ -1,8 +1,7 @@
 const express = require('express');
 const { ApolloServer } = require('apollo-server-express');
 const { makeExecutableSchema } = require('@graphql-tools/schema');
-const { GraphQLScalarType } = require('graphql');
-const { Kind } = require('graphql/language');
+const { GraphQLScalarType, Kind } = require('graphql');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -14,6 +13,8 @@ const resolvers = require('./resolvers');
 
 // Database (sử dụng in-memory hoặc kết nối database thực)
 const db = require('./database');
+
+// ==================== SCALAR TYPES ====================
 
 // JSON Scalar Type
 const JSONScalar = new GraphQLScalarType({
@@ -29,14 +30,38 @@ const JSONScalar = new GraphQLScalarType({
   },
 });
 
+// DateTime Scalar Type
+const DateTimeScalar = new GraphQLScalarType({
+  name: 'DateTime',
+  description: 'DateTime custom scalar type',
+  serialize: (value) => {
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+    return value;
+  },
+  parseValue: (value) => {
+    return new Date(value);
+  },
+  parseLiteral: (ast) => {
+    if (ast.kind === Kind.STRING) {
+      return new Date(ast.value);
+    }
+    return null;
+  },
+});
+
 // Create schema
 const schema = makeExecutableSchema({
   typeDefs,
   resolvers: {
     ...resolvers,
     JSON: JSONScalar,
+    DateTime: DateTimeScalar,
   },
 });
+
+// ==================== AUTHENTICATION ====================
 
 // JWT Authentication Middleware
 const authenticate = async (req) => {
@@ -47,7 +72,7 @@ const authenticate = async (req) => {
   }
   
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
     const user = await db.users.findById(decoded.userId);
     return { user };
   } catch (error) {
@@ -55,6 +80,8 @@ const authenticate = async (req) => {
     return { user: null };
   }
 };
+
+// ==================== APOLLO SERVER ====================
 
 // Create Apollo Server
 const createApolloServer = async () => {
@@ -88,6 +115,8 @@ const createApolloServer = async () => {
   return server;
 };
 
+// ==================== EXPRESS APP ====================
+
 // Create Express app
 const app = express();
 
@@ -118,12 +147,47 @@ const limiter = rateLimit({
 
 app.use('/graphql', limiter);
 
+// Body parser
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
 });
 
-// Start server
+// Mock login endpoint (for development)
+app.post('/api/login', (req, res) => {
+  const { email } = req.body;
+  
+  if (!email) {
+    return res.status(400).json({ error: 'Email required' });
+  }
+  
+  // In production, verify credentials against database
+  const userId = 'user-1'; // Mock user ID
+  const token = jwt.sign(
+    { userId, email, role: 'user' },
+    process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+    { expiresIn: '7d' }
+  );
+  
+  res.json({
+    success: true,
+    token,
+    user: {
+      id: userId,
+      email
+    }
+  });
+});
+
+// ==================== START SERVER ====================
+
 const startServer = async () => {
   try {
     const apolloServer = await createApolloServer();
@@ -139,12 +203,25 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`🚀 Server ready at http://localhost:${PORT}${apolloServer.graphqlPath}`);
       console.log(`🏥 Health check at http://localhost:${PORT}/health`);
+      console.log(`🔐 Mock login at http://localhost:${PORT}/api/login`);
+      console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
   }
 };
+
+// Handle uncaught errors
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
 
 startServer();
 
