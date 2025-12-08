@@ -6,8 +6,8 @@ import { CartSummary } from './components/cart/CartSummary';
 import { AddToCartButton } from './components/cart/AddToCartButton';
 import { CartBadge } from './components/cart/CartBadge';
 import { ErrorAlert } from './components/ui/ErrorAlert';
-import { DiscountCodeInput } from './components/cart/DiscountCodeInput';
-import { SecurityMetaTags } from './security/securityHeaders';
+import { DiscountCodeInput } from './components/cart/DiscountCodeInput'; // Sửa tên file
+import { SecurityMetaTags } from './security/securityHeader'; // Sửa từ securityHeaders thành securityHeader
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 // Sample products

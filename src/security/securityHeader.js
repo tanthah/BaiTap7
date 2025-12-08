@@ -78,27 +78,26 @@ export const securityHeaders = {
 export const applySecurityHeaders = (headers = {}) => {
   return {
     ...headers,
-    'X-Content-Type-Options': 'nosniff',
-    'X-Frame-Options': 'DENY'
+    'X-Content-Type-Options': 'nosniff'
   };
 };
 
 /**
  * Meta tags for HTML <head>
+ * IMPORTANT: Chỉ những headers có thể set qua meta tags
  */
 import React from 'react';
 
 export const SecurityMetaTags = () => {
   return (
     <>
+      {/* Chỉ X-Content-Type-Options có thể set qua meta */}
       <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
-      <meta httpEquiv="X-Frame-Options" content="DENY" />
-      <meta httpEquiv="X-XSS-Protection" content="1; mode=block" />
-      <meta 
-        httpEquiv="Content-Security-Policy" 
-        content={securityHeaders.getCSPString()} 
-      />
+      
+      {/* Referrer Policy */}
       <meta name="referrer" content="strict-origin-when-cross-origin" />
+      
+      {/* Note: CSP, X-Frame-Options, HSTS phải set từ server, không dùng meta tags */}
     </>
   );
 };
