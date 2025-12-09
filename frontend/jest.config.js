@@ -1,27 +1,22 @@
 module.exports = {
-  // Test environment
   testEnvironment: 'jsdom',
   
-  // Setup files
-  setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
+  // Setup files - FIX PATH
+  setupFilesAfterEnv: ['<rootDir>/setupTests.js'],  // Bỏ /src/
   
-  // Transform files with babel-jest
   transform: {
     '^.+\\.(js|jsx)$': 'babel-jest',
   },
   
-  // Module name mapper for CSS and assets
   moduleNameMapper: {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     '\\.(jpg|jpeg|png|gif|svg)$': '<rootDir>/__mocks__/fileMock.js'
   },
   
-  // Transform ignore patterns
   transformIgnorePatterns: [
     'node_modules/(?!(dompurify)/)'
   ],
   
-  // Coverage configuration
   collectCoverageFrom: [
     'src/**/*.{js,jsx}',
     '!src/index.js',
@@ -29,15 +24,12 @@ module.exports = {
     '!src/**/*.test.{js,jsx}'
   ],
   
-  // Test match patterns
   testMatch: [
     '<rootDir>/src/**/__tests__/**/*.{js,jsx}',
-    '<rootDir>/src/**/*.{spec,test}.{js,jsx}'
+    '<rootDir>/src/**/*.{spec,test}.{js,jsx}',
+    '<rootDir>/tests/**/*.{spec,test}.{js,jsx}'  // Add tests folder
   ],
   
-  // Module file extensions
   moduleFileExtensions: ['js', 'jsx', 'json', 'node'],
-  
-  // Verbose output
   verbose: true
 };
