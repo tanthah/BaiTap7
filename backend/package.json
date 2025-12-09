@@ -4,8 +4,8 @@
   "description": "Secure shopping cart GraphQL API server",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
     "lint": "eslint .",
