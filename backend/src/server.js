@@ -224,5 +224,10 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 startServer();
+if (process.env.NODE_ENV !== 'test') {
+  const server = app.listen(PORT, () => {
+    // Server started
+  });
+}
 
 module.exports = app;

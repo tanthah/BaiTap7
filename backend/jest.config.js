@@ -12,5 +12,9 @@ module.exports = {
   ],
   moduleFileExtensions: ['js', 'json'],
   verbose: true,
-  testTimeout: 10000
+  testTimeout: 10000,
+  forceExit: true,
+  clearMocks: true,
+  resetMocks: true,
+  restoreMocks: true,
 };

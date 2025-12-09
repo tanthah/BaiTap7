@@ -1,10 +1,10 @@
-// backend/src/resolvers/__tests__/resolvers.test.js
+// backend/tests/resolvers.test.js - FIXED VERSION
 
 const resolvers = require('../src/resolvers/index');
 const db = require('../src/database');
 
-// Mock database
-jest.mock('../../database');
+// ✅ FIXED: Changed from '../../database' to '../src/database'
+jest.mock('../src/database');
 
 describe('GraphQL Resolvers', () => {
   let mockContext;
